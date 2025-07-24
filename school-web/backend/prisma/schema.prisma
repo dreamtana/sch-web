@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Table 1: รายการหลัก
+model Transaction {
+  id          Int       @id @default(autoincrement())
+  title       String    // รายการ
+  date        DateTime  // วันที่
+  amount      Float     // จำนวนเงิน
+  duration    String    // ระยะเวลา
+  note        String?   @db.Text // เปลี่ยนเป็น Text เพื่อรองรับข้อความยาว
+  projectId   Int?      // โครงการที่เกี่ยวข้อง (optional)
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Table 2: โครงการ/กิจกรรม
+model Project {
+  id               Int             @id @default(autoincrement())
+  name             String
+  budget           Float
+  department       String
+  department_group DepartmentGroup?
+  responsible      String
+  withdrawalAmount Float           @default(0)
+  remainingBudget  Float
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  subsidyId        Int
+  fiscalYearId     Int
+  subsidy          Subsidy         @relation(fields: [subsidyId], references: [id], onDelete: Cascade)
+  fiscalYear       FiscalYear      @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+
+  Transaction Transaction[]
+}
+
+// Table 3: เงินอุดหนุน
+model Subsidy {
+  id              Int      @id @default(autoincrement())
+  type            String
+  budget          Float
+  withdrawal      Float    @default(0)
+  remainingBudget Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  fiscalYearId    Int
+  fiscalYear      FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Cascade)
+  projects        Project[]
+}
+
+// Table 4: ปีงบประมาณ
+model FiscalYear {
+  id              Int       @id @default(autoincrement())
+  year            String    // ปีงบประมาณ (เช่น "2567")
+  totalBudget     Float     // งบประมาณรวม (จาก Subsidy)
+  totalExpense    Float     @default(0) // รวมจาก Subsidy withdrawal
+  remainingBudget Float     // totalBudget - totalExpense
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  Subsidy Subsidy[]
+
+  Project Project[]
+}
+
+// User model
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// เพิ่ม enum DepartmentGroup
+enum DepartmentGroup {
+  ACADEMIC_ADMIN           @map("กลุ่มบริหารวิชาการ")
+  GENERAL_ADMIN           @map("กลุ่มบริหารทั่วไป") 
+  PERSONNEL_ADMIN         @map("กลุ่มบริหารงานบุคคล")
+  BUDGET_ADMIN            @map("กลุ่มบริหารงบประมาณ")
+  BUILDING_MANAGEMENT     @map("งานอาคารสถานที่")
+  THAI_LANGUAGE          @map("กลุ่มสาระการเรียนรู้ ภาษาไทย")
+  SOCIAL_STUDIES         @map("กลุ่มสาระการเรียนรู้ สังคมศึกษาฯ")
+  FOREIGN_LANGUAGES      @map("กลุ่มสาระการเรียนรู้ ภาษาต่างประเทศ")
+  ARTS                   @map("กลุ่มสาระการเรียนรู้ ศิลปะ")
+  MATHEMATICS            @map("กลุ่มสาระการเรียนรู้ คณิตศาสตร์")
+  SCIENCE_TECH           @map("กลุ่มสาระการเรียนรู้ วิทยาศาสตร์ และเทคโนโลยี")
+  CAREER_TECH           @map("กลุ่มสาระการเรียนรู้ การงานอาชีพ")
+  HEALTH_PE             @map("กลุ่มสาระการเรียนรู้ สุขศึกษาและพลศึกษา")
+  SPECIAL_CLASSROOM     @map("งานห้องเรียนพิเศษ")
+  INNOVATION_CENTER     @map("งานศูนย์นวัตกรรมและเทคโนโลยี")
+}

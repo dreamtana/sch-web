@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: backend
+    env: node
+    buildCommand: cd backend && npm install && npx prisma generate
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: "https://frontend-two-black-20.vercel.app"
+      - key: DATABASE_URL
+        value: "mysql://uegbtddouf6vzki1:ZIi4RrTmq01INU3qRknM@bqdph9qv1qpeoyrjist1-mysql.services.clever-cloud.com:3306/bqdph9qv1qpeoyrjist1"
+      - key: JWT_SECRET
+        sync: false
